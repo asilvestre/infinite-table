@@ -102,7 +102,7 @@ export default class InfiniteScroll {
     ajax() {
         let records = this.recordsToFetch();
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', `${this.options.url}?skip=${records[0]}&limit=${records[1]}`, true);
+        xhr.open('GET', this.options.url.format(records[0], records[1]), true);
         xhr.onreadystatechange = () => {
             if (xhr.readyState !== 4) return;
             if (xhr.status !== 200) return;
@@ -114,13 +114,14 @@ export default class InfiniteScroll {
     sockets() {
         let records = this.recordsToFetch();
         if (! io) throw new Error('No socket driver found');
-        io.socket.get(`${this.options.url}?skip=${records[0]}&limit=${records[1]}`, result => {
+        io.socket.get(this.options.url.format(records[0], records[1]), result => {
             this.handleResponse(result);
         })
     }
 
     handleResponse(data) {
-        Promise.resolve(this.addElementsToDOM(data))
+      pdata = this.options.parseData ? this.options.parseData(data) : data;
+        Promise.resolve(this.addElementsToDOM(pdata))
             .then(() => {
                 this.page++;
                 this.elementToWatch = document.getElementById(this.element).rows[document.getElementById(this.element).rows.length - this.options.loadTiming];
